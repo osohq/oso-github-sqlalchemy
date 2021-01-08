@@ -4,6 +4,7 @@ from .models import User, Organization, Team, Repository, Issue
 from .models import RepositoryRole, OrganizationRole, TeamRole
 
 from sqlalchemy_oso import roles as oso_roles
+from oso import Variable
 
 bp = Blueprint("routes", __name__)
 
@@ -52,7 +53,13 @@ def repos_show(org_id, repo_id):
 
     # Authorize repo access
     current_app.oso.authorize(repo, actor=g.current_user, action="READ")
-    return {f"repo for org {org_id}": repo.repr()}
+
+    # Get allowed actions on the repo
+    results = current_app.oso._oso.query_rule(
+        "allow", g.current_user, Variable("action"), repo
+    )
+    actions = list(set([result.get("bindings").get("action") for result in results]))
+    return {f"repo": repo.repr(), "actions": actions}
 
 
 @bp.route("/orgs/<int:org_id>/repos/<int:repo_id>/issues", methods=["GET"])
