@@ -72,6 +72,9 @@ role_allow(_role: OrganizationRole{name: "OWNER"}, "READ", role_resource: Organi
 ### Read role can read the repository
 role_allow(_role: RepositoryRole{name: "READ"}, "READ", repo: Repository);
 
+### Read role can read the repository
+role_allow(_role: RepositoryRole{name: "WRITE"}, "WRITE", repo: Repository);
+
 ### All organization members can create repositories
 role_allow(_role: OrganizationRole{name: "MEMBER"}, "CREATE", repository: Repository);
 

@@ -49,10 +49,8 @@ def load_fixture_data(session):
         session.add(team)
     abby_road = Repository(name="Abbey Road", organization=beatles)
     paperwork = Repository(name="Paperwork", organization=monsters)
-    repositories = [
-        abby_road,
-        paperwork,
-    ]
+    scarer_training = Repository(name="Scarer Training", organization=monsters)
+    repositories = [abby_road, paperwork, scarer_training]
     for repo in repositories:
         session.add(repo)
     # TODO: issues
@@ -64,6 +62,7 @@ def load_fixture_data(session):
         RepositoryRole(name="WRITE", repository=abby_road, team=percussion),
         RepositoryRole(name="READ", repository=paperwork, user=mike),
         RepositoryRole(name="READ", repository=paperwork, user=sully),
+        RepositoryRole(name="WRITE", repository=scarer_training, team=scarers),
         OrganizationRole(
             name="OWNER",
             organization=beatles,

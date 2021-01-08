@@ -54,11 +54,14 @@ def repos_show(org_id, repo_id):
     # Authorize repo access
     current_app.oso.authorize(repo, actor=g.current_user, action="READ")
 
+    ## EXPERIMENTAL START
     # Get allowed actions on the repo
     results = current_app.oso._oso.query_rule(
         "allow", g.current_user, Variable("action"), repo
     )
     actions = list(set([result.get("bindings").get("action") for result in results]))
+    print(actions)
+    ## EXPERIMENTAL END
     return {f"repo": repo.repr(), "actions": actions}
 
 
@@ -81,6 +84,19 @@ def repo_roles_index(org_id, repo_id):
         current_app.oso.authorize(repo, actor=g.current_user, action="LIST_ROLES")
 
         roles = oso_roles.get_resource_roles(g.auth_session, repo)
+        ## EXPERIMENTAL START
+        # Get each role's allowed actions on the repo
+        role_actions = {}
+        for role in roles:
+            results = current_app.oso._oso.query_rule(
+                "role_allow", role, Variable("action"), repo
+            )
+            actions = list(
+                set([result.get("bindings").get("action") for result in results])
+            )
+            role_actions[str(role.repr())] = actions
+        print(role_actions)
+        ## EXPERIMENTAL END
         return {
             f"roles": [
                 {

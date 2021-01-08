@@ -38,6 +38,7 @@ def create_app(db_path=None, load_fixtures=False):
         get_user=lambda: g.current_user,
         get_action=lambda: g.current_action,
     )
+    app.auth_sessionmaker = AuthorizedSession
     Session = sessionmaker(bind=engine)
     session = Session()
 
