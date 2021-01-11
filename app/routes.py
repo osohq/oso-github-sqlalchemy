@@ -112,15 +112,16 @@ def repo_roles_index(org_id, repo_id):
             actions = list(
                 set([result.get("bindings").get("action") for result in results])
             )
-            role_actions[str(role.repr())] = actions
+            role_actions[role.id] = actions
         ## EXPERIMENTAL END
+        print(roles)
         return {
             "roles": [
                 {
                     "user": role.user.repr() if role.user else {"email": "none"},
                     "team": role.team.repr() if role.team else {"name": "none"},
                     "role": role.repr(),
-                    "actions": role_actions[str(role.repr())],
+                    "actions": role_actions[role.id],
                 }
                 for role in roles
             ]
