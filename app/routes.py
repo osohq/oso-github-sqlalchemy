@@ -60,7 +60,6 @@ def repos_show(org_id, repo_id):
         "allow", g.current_user, Variable("action"), repo
     )
     actions = list(set([result.get("bindings").get("action") for result in results]))
-    print(actions)
     ## EXPERIMENTAL END
     return {f"repo": repo.repr(), "actions": actions}
 
@@ -95,7 +94,6 @@ def repo_roles_index(org_id, repo_id):
                 set([result.get("bindings").get("action") for result in results])
             )
             role_actions[str(role.repr())] = actions
-        print(role_actions)
         ## EXPERIMENTAL END
         return {
             f"roles": [
@@ -103,6 +101,7 @@ def repo_roles_index(org_id, repo_id):
                     "user": role.user.repr() if role.user else {"email": "none"},
                     "team": role.team.repr() if role.team else {"name": "none"},
                     "role": role.repr(),
+                    "actions": role_actions[str(role.repr())],
                 }
                 for role in roles
             ]
