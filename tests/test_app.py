@@ -22,31 +22,64 @@ def test_user(test_client):
 
 
 def test_orgs(test_client):
+    org_owner_actions = set(
+        [
+            "LIST_REPOS",
+            "LIST_ROLES",
+            "READ_BILLING",
+            "READ",
+            "LIST_TEAMS",
+        ]
+    )
+    org_member_actions = set(["READ", "LIST_TEAMS", "LIST_REPOS"])
+
+    # Test org OWNER role
     resp = test_client.get("/orgs", headers={"user": "john@beatles.com"})
     assert resp.status_code == 200
 
     orgs = json.loads(resp.data).get("orgs")
     assert len(orgs) == 1
-    assert orgs[0]["name"] == "The Beatles"
+    assert orgs[0]["org"]["name"] == "The Beatles"
+    assert set(orgs[0]["actions"]) == org_owner_actions
 
     resp = test_client.get("/orgs", headers={"user": "mike@monsters.com"})
     assert resp.status_code == 200
 
     orgs = json.loads(resp.data).get("orgs")
     assert len(orgs) == 1
-    assert orgs[0]["name"] == "Monsters Inc."
+    assert orgs[0]["org"]["name"] == "Monsters Inc."
+    assert set(orgs[0]["actions"]) == org_owner_actions
+
+    # Test org MEMBER role
+    resp = test_client.get("/orgs", headers={"user": "paul@beatles.com"})
+    assert resp.status_code == 200
+    orgs = json.loads(resp.data).get("orgs")
+    assert len(orgs) == 1
+    assert orgs[0]["org"]["name"] == "The Beatles"
+    assert set(orgs[0]["actions"]) == org_member_actions
 
 
-def test_repos_index(test_client):
+def test_repos_index(test_client, repo_admin_actions, repo_read_actions):
+    # Test repo ADMIN role
     resp = test_client.get("/orgs/1/repos", headers={"user": "john@beatles.com"})
     assert resp.status_code == 200
 
     repos = json.loads(resp.data).get("repos")
     assert len(repos) == 1
-    assert repos[0]["name"] == "Abbey Road"
+    assert repos[0]["repo"]["name"] == "Abbey Road"
+    assert set(repos[0]["actions"]) == repo_admin_actions
 
     resp = test_client.get("/orgs/2/repos", headers={"user": "john@beatles.com"})
     assert resp.status_code == 403
+
+    # Test repo READ role
+    resp = test_client.get("/orgs/1/repos", headers={"user": "paul@beatles.com"})
+    assert resp.status_code == 200
+
+    repos = json.loads(resp.data).get("repos")
+    assert len(repos) == 1
+    assert repos[0]["repo"]["name"] == "Abbey Road"
+    assert set(repos[0]["actions"]) == repo_read_actions
 
 
 def test_repos_new(test_client):
@@ -65,14 +98,36 @@ def test_repos_new(test_client):
     assert resp.status_code == 403
 
 
-def test_repos_show(test_client):
-    # test user with direct access to repo can read it
+def test_repos_show(
+    test_client, repo_admin_actions, repo_read_actions, repo_write_actions
+):
+    # test user with ADMIN role on repo
+    resp = test_client.get("/orgs/1/repos/1", headers={"user": "paul@beatles.com"})
+    assert resp.status_code == 200
+    actions = set(json.loads(resp.data).get("actions"))
+    assert actions == repo_admin_actions
+
+    # test user with OWNER role on parent org has admin permissions on the repo
     resp = test_client.get("/orgs/1/repos/1", headers={"user": "john@beatles.com"})
     assert resp.status_code == 200
+    ## TODO: doesn't work properly now because we don't have a way to inherit permissions across resource role types
+    ## would like to specificy that OrganizationRole{name: "OWNER"} inherits permissions from RepositoryRole{name: "ADMIN"} for all repos in the repository
+    # actions = set(json.loads(resp.data).get("actions"))
+    # assert actions == repo_admin_actions
 
     # test user with org base role access to repo can read it
+    resp = test_client.get("/orgs/1/repos/1", headers={"user": "george@beatles.com"})
+    assert resp.status_code == 200
+    # TODO: allowed actions don't match with the direct "READ" role exactly because we don't have a way to inherit permissions across resource role types
+    # would like to specificy that OrganizationRole{name: "MEMBER"} inherits permissions from RepositoryRole{name: "READ"} for all repos in the repository
+    # actions = set(json.loads(resp.data).get("actions"))
+    # assert actions == repo_read_actions
+
+    # test user on a team with the write role can write to it
     resp = test_client.get("/orgs/1/repos/1", headers={"user": "ringo@beatles.com"})
     assert resp.status_code == 200
+    actions = set(json.loads(resp.data).get("actions"))
+    assert actions == repo_write_actions
 
     # test user outside org cannot read repos
     resp = test_client.get("/orgs/2/repos/2", headers={"user": "john@beatles.com"})

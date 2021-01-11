@@ -32,3 +32,18 @@ def test_db_session(db_path):
     load_fixture_data(session)
 
     return session
+
+
+@pytest.fixture
+def repo_admin_actions():
+    return set(["CREATE", "READ", "WRITE", "LIST_ROLES", "LIST_ISSUES"])
+
+
+@pytest.fixture
+def repo_read_actions():
+    return set(["CREATE", "READ", "LIST_ISSUES"])
+
+
+@pytest.fixture
+def repo_write_actions():
+    return set(["CREATE", "READ", "LIST_ISSUES", "WRITE"])

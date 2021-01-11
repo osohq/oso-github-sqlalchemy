@@ -6,10 +6,11 @@ def load_fixture_data(session):
     # CREATE USER DATA
     john = User(email="john@beatles.com")
     paul = User(email="paul@beatles.com")
+    george = User(email="george@beatles.com")
+    ringo = User(email="ringo@beatles.com")
     admin = User(email="admin@admin.com")
     mike = User(email="mike@monsters.com")
     sully = User(email="sully@monsters.com")
-    ringo = User(email="ringo@beatles.com")
     randall = User(email="randall@monsters.com")
     users = [
         john,
@@ -58,7 +59,7 @@ def load_fixture_data(session):
     # CREATE ROLE DATA
     roles = [
         RepositoryRole(name="READ", repository=abby_road, user=john),
-        RepositoryRole(name="READ", repository=abby_road, user=paul),
+        RepositoryRole(name="ADMIN", repository=abby_road, user=paul),
         RepositoryRole(name="WRITE", repository=abby_road, team=percussion),
         RepositoryRole(name="READ", repository=paperwork, user=mike),
         RepositoryRole(name="READ", repository=paperwork, user=sully),
@@ -77,6 +78,11 @@ def load_fixture_data(session):
             name="MEMBER",
             organization=beatles,
             user=ringo,
+        ),
+        OrganizationRole(
+            name="MEMBER",
+            organization=beatles,
+            user=george,
         ),
         OrganizationRole(
             name="OWNER",

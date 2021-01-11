@@ -19,8 +19,16 @@ def hello():
 
 @bp.route("/orgs", methods=["GET"])
 def orgs_index():
-    orgs = g.auth_session.query(Organization).all()
-    return {"orgs": [org.repr() for org in orgs]}
+    # get all allowed organizations
+    g.current_action = Variable("action")
+    new_auth_session = current_app.auth_sessionmaker()
+    orgs = new_auth_session.query(Organization).all()
+    # get allowed actions
+    actions = {org.name: get_allowed_actions(current_app.oso._oso, org) for org in orgs}
+
+    return {
+        "orgs": [{"org": org.repr(), "actions": actions.get(org.name)} for org in orgs]
+    }
 
 
 @bp.route("/orgs/<int:org_id>/repos", methods=["GET"])
@@ -28,8 +36,19 @@ def repos_index(org_id):
     org = g.basic_session.query(Organization).filter(Organization.id == org_id).first()
     current_app.oso.authorize(org, actor=g.current_user, action="LIST_REPOS")
 
-    repos = g.auth_session.query(Repository).filter_by(organization=org)
-    return {f"repos": [repo.repr() for repo in repos]}
+    # get all allowed repositories
+    g.current_action = Variable("action")
+    new_auth_session = current_app.auth_sessionmaker()
+    repos = new_auth_session.query(Repository).filter_by(organization=org)
+    # get allowed actions
+    actions = {
+        repo.name: get_allowed_actions(current_app.oso._oso, repo) for repo in repos
+    }
+    return {
+        "repos": [
+            {"repo": repo.repr(), "actions": actions.get(repo.name)} for repo in repos
+        ]
+    }
 
 
 @bp.route("/orgs/<int:org_id>/repos", methods=["POST"])
@@ -61,7 +80,7 @@ def repos_show(org_id, repo_id):
     )
     actions = list(set([result.get("bindings").get("action") for result in results]))
     ## EXPERIMENTAL END
-    return {f"repo": repo.repr(), "actions": actions}
+    return {"repo": repo.repr(), "actions": actions}
 
 
 @bp.route("/orgs/<int:org_id>/repos/<int:repo_id>/issues", methods=["GET"])
@@ -96,7 +115,7 @@ def repo_roles_index(org_id, repo_id):
             role_actions[str(role.repr())] = actions
         ## EXPERIMENTAL END
         return {
-            f"roles": [
+            "roles": [
                 {
                     "user": role.user.repr() if role.user else {"email": "none"},
                     "team": role.team.repr() if role.team else {"name": "none"},
@@ -152,3 +171,9 @@ def org_roles_index(org_id):
     return {
         f"roles": [{"user": role.user.repr(), "role": role.repr()} for role in roles]
     }
+
+
+def get_allowed_actions(oso, resource):
+    # Get allowed actions on the repo
+    results = oso.query_rule("allow", g.current_user, Variable("action"), resource)
+    return list(set([result.get("bindings").get("action") for result in results]))
