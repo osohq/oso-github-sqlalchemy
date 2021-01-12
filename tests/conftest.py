@@ -36,14 +36,19 @@ def test_db_session(db_path):
 
 @pytest.fixture
 def repo_admin_actions():
-    return set(["CREATE", "READ", "WRITE", "LIST_ROLES", "LIST_ISSUES"])
+    return set(["READ", "WRITE", "LIST_ROLES", "LIST_ISSUES"])
 
 
 @pytest.fixture
 def repo_read_actions():
-    return set(["CREATE", "READ", "LIST_ISSUES"])
+    return set(["READ", "LIST_ISSUES"])
 
 
 @pytest.fixture
 def repo_write_actions():
-    return set(["CREATE", "READ", "LIST_ISSUES", "WRITE"])
+    return set(["READ", "LIST_ISSUES", "WRITE"])
+
+
+@pytest.fixture
+def org_member_repo_actions():
+    return set(["CREATE"])

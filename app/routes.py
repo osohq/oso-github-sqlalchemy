@@ -1,3 +1,4 @@
+from copy import deepcopy
 from flask import Blueprint, g, request, current_app
 from flask_oso import authorize
 from .models import User, Organization, Team, Repository, Issue
@@ -105,23 +106,28 @@ def repo_roles_index(org_id, repo_id):
         ## EXPERIMENTAL START
         # Get each role's allowed actions on the repo
         role_actions = {}
-        for role in roles:
-            results = current_app.oso._oso.query_rule(
-                "role_allow", role, Variable("action"), repo
-            )
-            actions = list(
-                set([result.get("bindings").get("action") for result in results])
-            )
-            role_actions[role.id] = actions
+        # for role in roles:
+        #     results = current_app.oso._oso.query_rule(
+        #         "role_allow", role, Variable("action"), repo
+        #     )
+        #     # Necessary because `role` and `repo` are still associated with `basic_session`, and are used to
+        #     # create new objects from within the policy. The only way to prevent those objects from being
+        #     # added to the session is to rollback the session after each query
+        #     g.basic_session.rollback()
+        #     actions = list(
+        #         set([result.get("bindings").get("action") for result in results])
+        #     )
+        #     role_actions[role.id] = actions
         ## EXPERIMENTAL END
-        print(roles)
         return {
             "roles": [
                 {
                     "user": role.user.repr() if role.user else {"email": "none"},
                     "team": role.team.repr() if role.team else {"name": "none"},
                     "role": role.repr(),
-                    "actions": role_actions[role.id],
+                    "actions": get_role_allowed_actions(
+                        current_app.oso._oso, g.basic_session, role, repo
+                    ),
                 }
                 for role in roles
             ]
@@ -133,9 +139,12 @@ def repo_roles_index(org_id, repo_id):
         role_info = content.get("role")
         role_name = role_info.get("name")
         user_email = role_info.get("user")
-        user = g.auth_session.query(User).filter_by(email=user_email).first()
-        repo = g.auth_session.query(Repository).filter_by(id=repo_id).first()
-        oso_roles.add_user_role(g.auth_session, user, repo, role_name, commit=True)
+        new_auth_session = current_app.auth_sessionmaker()
+        user = new_auth_session.query(User).filter_by(email=user_email).first()
+        repo = new_auth_session.query(Repository).filter_by(id=repo_id).first()
+        oso_roles.reassign_user_role(
+            new_auth_session, user, repo, role_name, commit=True
+        )
         return f"created a new repo role for repo: {repo_id}, {role_name}"
 
 
@@ -177,4 +186,13 @@ def org_roles_index(org_id):
 def get_allowed_actions(oso, resource):
     # Get allowed actions on the repo
     results = oso.query_rule("allow", g.current_user, Variable("action"), resource)
+    return list(set([result.get("bindings").get("action") for result in results]))
+
+
+def get_role_allowed_actions(oso, session, role, resource):
+    results = oso.query_rule("role_allow", role, Variable("action"), resource)
+    # Necessary because `role` and `resource` are still associated with a our session, and are used to
+    # create new objects from within the policy. The only way to prevent those objects from being
+    # added to the session is to rollback the session after each query
+    session.rollback()
     return list(set([result.get("bindings").get("action") for result in results]))

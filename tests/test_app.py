@@ -59,7 +59,9 @@ def test_orgs(test_client):
     assert set(orgs[0]["actions"]) == org_member_actions
 
 
-def test_repos_index(test_client, repo_admin_actions, repo_write_actions):
+def test_repos_index(
+    test_client, repo_admin_actions, repo_write_actions, org_member_repo_actions
+):
     # Test repo ADMIN role
     resp = test_client.get("/orgs/1/repos", headers={"user": "paul@beatles.com"})
     assert resp.status_code == 200
@@ -67,7 +69,7 @@ def test_repos_index(test_client, repo_admin_actions, repo_write_actions):
     repos = json.loads(resp.data).get("repos")
     assert len(repos) == 1
     assert repos[0]["repo"]["name"] == "Abbey Road"
-    assert set(repos[0]["actions"]) == repo_admin_actions
+    assert set(repos[0]["actions"]) == repo_admin_actions.union(org_member_repo_actions)
 
     resp = test_client.get("/orgs/2/repos", headers={"user": "paul@beatles.com"})
     assert resp.status_code == 403
@@ -90,13 +92,17 @@ def test_repos_new(test_client):
 
 
 def test_repos_show(
-    test_client, repo_admin_actions, repo_read_actions, repo_write_actions
+    test_client,
+    repo_admin_actions,
+    repo_read_actions,
+    repo_write_actions,
+    org_member_repo_actions,
 ):
     # test user with ADMIN role on repo
     resp = test_client.get("/orgs/1/repos/1", headers={"user": "paul@beatles.com"})
     assert resp.status_code == 200
     actions = set(json.loads(resp.data).get("actions"))
-    assert actions == repo_admin_actions
+    assert actions == repo_admin_actions.union(org_member_repo_actions)
 
     # test user with OWNER role on parent org has admin permissions on the repo
     resp = test_client.get("/orgs/1/repos/1", headers={"user": "john@beatles.com"})
@@ -118,7 +124,7 @@ def test_repos_show(
     resp = test_client.get("/orgs/1/repos/1", headers={"user": "ringo@beatles.com"})
     assert resp.status_code == 200
     actions = set(json.loads(resp.data).get("actions"))
-    assert actions == repo_write_actions
+    assert actions == repo_write_actions.union(org_member_repo_actions)
 
     # test user outside org cannot read repos
     resp = test_client.get("/orgs/2/repos/2", headers={"user": "john@beatles.com"})
@@ -146,7 +152,9 @@ def test_issues_index(test_client):
     # TODO: add issues to fixtures to test list filtering
 
 
-def test_repo_roles(test_client, repo_admin_actions, repo_write_actions):
+def test_repo_roles(
+    test_client, repo_admin_actions, repo_write_actions, repo_read_actions
+):
     # Test getting roles
     resp = test_client.get(
         "/orgs/1/repos/1/roles", headers={"user": "john@beatles.com"}
@@ -156,10 +164,11 @@ def test_repo_roles(test_client, repo_admin_actions, repo_write_actions):
     assert len(roles) == 3
     roles.sort(key=lambda x: x.get("user").get("email"))
     assert roles[0].get("user").get("email") == "john@beatles.com"
+    assert set(roles[0].get("actions")) == repo_read_actions
     assert roles[1].get("team").get("name") == "Percussion"
     assert set(roles[1].get("actions")) == repo_write_actions
     assert roles[2].get("user").get("email") == "paul@beatles.com"
-    assert set(roles[0].get("actions")) == repo_admin_actions
+    assert set(roles[2].get("actions")) == repo_admin_actions
 
     # non-admins can't get roles
     resp = test_client.get(
