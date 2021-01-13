@@ -152,7 +152,7 @@ def test_issues_index(test_client):
     # TODO: add issues to fixtures to test list filtering
 
 
-def test_repo_roles(
+def test_repo_roles_get(
     test_client, repo_admin_actions, repo_write_actions, repo_read_actions
 ):
     # Test getting roles
@@ -164,17 +164,24 @@ def test_repo_roles(
     assert len(roles) == 3
     roles.sort(key=lambda x: x.get("user").get("email"))
     assert roles[0].get("user").get("email") == "john@beatles.com"
-    assert set(roles[0].get("actions")) == repo_read_actions
     assert roles[1].get("team").get("name") == "Percussion"
-    assert set(roles[1].get("actions")) == repo_write_actions
     assert roles[2].get("user").get("email") == "paul@beatles.com"
-    assert set(roles[2].get("actions")) == repo_admin_actions
 
     # non-admins can't get roles
     resp = test_client.get(
         "/orgs/1/repos/1/roles", headers={"user": "ringo@beatles.com"}
     )
     assert resp.status_code == 403
+
+
+def test_repo_roles_post(test_client):
+    # Test getting roles
+    resp = test_client.get(
+        "/orgs/1/repos/1/roles", headers={"user": "john@beatles.com"}
+    )
+    roles = json.loads(resp.data).get("roles")
+    assert resp.status_code == 200
+    assert len(roles) == 3
 
     # Test editing roles
     resp = test_client.post(

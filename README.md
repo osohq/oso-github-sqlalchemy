@@ -162,6 +162,13 @@ $ curl --header "user: mike@monsters.com" localhost:5000/orgs/1/repos
 
 ### POST "/orgs/<int:org_id>/repos/<int:repo_id>/roles"
 
+```
+$ curl -X POST -H "Content-type: application/json" \
+  -H "user: paul@beatles.com" \
+  -d '{"role": {"name": "WRITE", "user": "ringo@beatles.com"}}' \
+  localhost:5000/orgs/1/repos/1/roles
+```
+
 ### GET "/orgs/<int:org_id>/teams"
 
 ### GET "/orgs/<int:org_id>/teams/<int:team_id>"
