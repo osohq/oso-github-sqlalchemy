@@ -25,7 +25,12 @@ def orgs_index():
     new_auth_session = current_app.auth_sessionmaker()
     orgs = new_auth_session.query(Organization).all()
     # get allowed actions
-    actions = {org.name: get_allowed_actions(current_app.oso._oso, org) for org in orgs}
+    actions = {
+        org.name: current_app.oso._oso.get_allowed_actions(
+            g.current_user, org, allow_unbound=True
+        )
+        for org in orgs
+    }
 
     return {
         "orgs": [{"org": org.repr(), "actions": actions.get(org.name)} for org in orgs]
@@ -43,7 +48,10 @@ def repos_index(org_id):
     repos = new_auth_session.query(Repository).filter_by(organization=org)
     # get allowed actions
     actions = {
-        repo.name: get_allowed_actions(current_app.oso._oso, repo) for repo in repos
+        repo.name: current_app.oso._oso.get_allowed_actions(
+            g.current_user, repo, allow_unbound=True
+        )
+        for repo in repos
     }
     return {
         "repos": [
@@ -76,10 +84,9 @@ def repos_show(org_id, repo_id):
 
     ## EXPERIMENTAL START
     # Get allowed actions on the repo
-    results = current_app.oso._oso.query_rule(
-        "allow", g.current_user, Variable("action"), repo
+    actions = current_app.oso._oso.get_allowed_actions(
+        g.current_user, repo, allow_unbound=True
     )
-    actions = list(set([result.get("bindings").get("action") for result in results]))
     ## EXPERIMENTAL END
     return {"repo": repo.repr(), "actions": actions}
 
@@ -159,9 +166,3 @@ def org_roles_index(org_id):
     return {
         f"roles": [{"user": role.user.repr(), "role": role.repr()} for role in roles]
     }
-
-
-def get_allowed_actions(oso, resource):
-    # Get allowed actions on the repo
-    results = oso.query_rule("allow", g.current_user, Variable("action"), resource)
-    return list(set([result.get("bindings").get("action") for result in results]))
