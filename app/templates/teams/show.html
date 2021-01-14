@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "View Team" %}{% endblock %}
+{% block content %}
+<h1>
+  <a href="{% url 'repos_index' team.organization %}">{{ team.organization }}</a>
+  / {{ team.name }} Team
+</h1>
+<br />
+<h2>Members</h2>
+<ul class="list-group">
+  {% for user in members %}
+  <b>{{ user.username }}</b>
+  {% endfor %}
+</ul>
+<br />
+<h2>Repositories</h2>
+{% if roles %}
+<ul class="list-group">
+  {% for role in roles %}
+  <b>{{ role.name }} on {{ role.repository }}</b>
+  {% endfor %}
+</ul>
+{% else %}
+<p>This team does not have access to any repositories.</p>
+{% endif %} {% endblock %}

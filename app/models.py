@@ -2,10 +2,10 @@ import json
 import datetime
 from enum import Enum
 
-from flask import current_app
+from flask import current_app, g
 from flask_sqlalchemy import SQLAlchemy
 
-from sqlalchemy.types import Integer, String, DateTime
+from sqlalchemy.types import Integer, String, DateTime, Boolean
 from sqlalchemy.schema import Table, Column, ForeignKey
 from sqlalchemy.orm import relationship, scoped_session, backref
 
@@ -15,7 +15,6 @@ from sqlalchemy_oso import authorized_sessionmaker
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from sqlalchemy_oso.roles import resource_role_class
-
 
 Base = declarative_base()
 
@@ -37,11 +36,23 @@ class Organization(Base):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-    email = Column(String())
+    email = Column(String(), primary_key=True)
+    authenticated = Column(Boolean, default=False)
+
+    def is_active(self):
+        return True
+
+    def get_id(self):
+        return self.email
+
+    def is_authenticated(self):
+        return self.is_authenticated
+
+    def is_anonymous(self):
+        return False
 
     def repr(self):
-        return {"id": self.id, "email": self.email}
+        return {"email": self.email}
 
 
 class Team(Base):

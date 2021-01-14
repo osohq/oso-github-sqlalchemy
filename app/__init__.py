@@ -1,7 +1,9 @@
 from flask import g, Flask, request
 
+from flask_login import LoginManager, current_user
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from .models import Base, User
 from .fixtures import load_fixture_data
@@ -27,19 +29,26 @@ def create_app(db_path=None, load_fixtures=False):
     # init app
     app = Flask(__name__)
     app.register_blueprint(routes.bp)
+    app.secret_key = b"\xc7\xbbl;\xabn\xfd'8T\xe5i\xf4\x95\x9c\x80"
+
+    login_manager = LoginManager()
+    login_manager.login_view = "routes.login"
+    login_manager.init_app(app)
 
     # init oso
     oso = init_oso(app)
 
     # init sessions
-    AuthorizedSession = authorized_sessionmaker(
-        bind=engine,
-        get_oso=lambda: oso,
-        get_user=lambda: g.current_user,
-        get_action=lambda: g.current_action,
+    AuthorizedSession = scoped_session(
+        authorized_sessionmaker(
+            bind=engine,
+            get_oso=lambda: oso,
+            get_user=lambda: current_user,
+            get_action=lambda: g.current_action,
+        )
     )
     app.auth_sessionmaker = AuthorizedSession
-    Session = sessionmaker(bind=engine)
+    Session = scoped_session(sessionmaker(bind=engine))
     session = Session()
 
     # optionally load fixture data
@@ -47,26 +56,47 @@ def create_app(db_path=None, load_fixtures=False):
         load_fixture_data(session)
 
     @app.before_request
-    def set_current_user_and_session():
-        if "current_user" not in g:
-            email = request.headers.get("user")
-            if not email:
-                return Unauthorized("user not found")
-            try:
-                # Set basic (non-auth) session for this request
-                g.basic_session = session
+    def set_current_session():
+        # Set basic (non-auth) session for this request
+        g.basic_session = session
 
-                # Set user for this request
-                g.current_user = session.query(User).filter(User.email == email).first()
-                # Set action for this request
-                actions = {"GET": "READ", "POST": "CREATE"}
-                g.current_action = actions[request.method]
+        # Set action for this request
+        actions = {"GET": "READ", "POST": "CREATE"}
+        g.current_action = actions[request.method]
 
-                # Set auth session for this request
-                g.auth_session = AuthorizedSession()
+        # Set auth session for this request
+        g.auth_session = AuthorizedSession()
 
-            except Exception as e:
-                return Unauthorized("user not found")
+    @app.teardown_request
+    def remove_session(ex=None):
+        Session.remove()
+        AuthorizedSession.remove()
+
+    @login_manager.user_loader
+    def user_loader(user_id):
+        return g.basic_session.query(User).get(user_id)
+
+    # @app.before_request
+    # def set_current_user_and_session():
+    #     if "current_user" not in g:
+    #         email = request.headers.get("user")
+    #         if not email:
+    #             return Unauthorized("user not found")
+    #         try:
+    #             # Set basic (non-auth) session for this request
+    #             g.basic_session = session
+
+    #             # Set user for this request
+    #             g.current_user = session.query(User).filter(User.email == email).first()
+    #             # Set action for this request
+    #             actions = {"GET": "READ", "POST": "CREATE"}
+    #             g.current_action = actions[request.method]
+
+    #             # Set auth session for this request
+    #             g.auth_session = AuthorizedSession()
+
+    #         except Exception as e:
+    #             return Unauthorized("user not found")
 
     return app
 

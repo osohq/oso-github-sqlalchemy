@@ -1,21 +1,40 @@
 from copy import deepcopy
-from flask import Blueprint, g, request, current_app
+from flask import Blueprint, g, request, current_app, redirect, render_template, flash
 from flask_oso import authorize
 from .models import User, Organization, Team, Repository, Issue
 from .models import RepositoryRole, OrganizationRole, TeamRole
+from .forms import LoginForm
 
 from sqlalchemy_oso import roles as oso_roles
 from oso import Variable
+
+from flask_login import login_required, login_user
+
 
 bp = Blueprint("routes", __name__)
 
 
 @bp.route("/", methods=["GET"])
+@login_required
 def hello():
-    if "current_user" in g:
-        return g.current_user.repr()
-    else:
-        return f'Please "log in"'
+    return redirect("/orgs")
+
+
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = g.basic_session.query(User).get(form.email.data)
+        if user:
+            user.authenticated = True
+            g.basic_session.add(user)
+            g.basic_session.commit()
+            login_user(user)
+            return redirect("/orgs")
+        else:
+            flash("Login attempt failed")
+
+    return render_template("login.html", form=form)
 
 
 @bp.route("/orgs", methods=["GET"])

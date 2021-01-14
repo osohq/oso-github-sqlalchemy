@@ -241,10 +241,10 @@ def test_org_roles(test_client):
     roles = json.loads(resp.data).get("roles")
     assert resp.status_code == 200
     assert len(roles) == 4
-    assert roles[0].get("user").get("email") == "john@beatles.com"
-    assert roles[1].get("user").get("email") == "paul@beatles.com"
-    assert roles[2].get("user").get("email") == "ringo@beatles.com"
-    assert roles[3].get("user").get("email") == "george@beatles.com"
+    assert roles[0].get("user").get("email") == "george@beatles.com"
+    assert roles[1].get("user").get("email") == "john@beatles.com"
+    assert roles[2].get("user").get("email") == "paul@beatles.com"
+    assert roles[3].get("user").get("email") == "ringo@beatles.com"
 
     resp = test_client.get("/orgs/1/roles", headers={"user": "paul@beatles.com"})
     assert resp.status_code == 403
