@@ -37,11 +37,13 @@
   </a>
 </div>
 {% endif %}
+{% if  "DELETE" in actions %}
 <br />
 <form action={{ url_for('routes.repos_show', org_id=org_id, repo_id=repo.id) }} method="POST">
   <button class="btn btn-primary" type="submit" name="delete_repo" value="">
     Delete Repository
   </button>
 </form>
+{% endif %}
 
 {% endblock %}

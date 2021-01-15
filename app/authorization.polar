@@ -2,8 +2,6 @@
 # ALLOW RULES
 # ===========
 
-# allow(_, _, _);
-
 # Users can see other users in their organization
 allow(user: User, _action, resource: User) if
     org in user.organizations and org in resource.organizations;
@@ -101,8 +99,12 @@ role_allow(role: RepositoryRole, "READ", issue: Issue) if
     role_allow(role, "READ", repo);
 
 role_allow(_role: RepositoryRole{name: "READ"}, "LIST_ISSUES", _repo: Repository);
-role_allow(_role: OrganizationRole{name: "OWNER"}, "LIST_ROLES", _repo: Repository);
-role_allow(_role: RepositoryRole{name: "ADMIN"}, "LIST_ROLES", _repo: Repository);
+
+# Repository Admin permissions (shared by Organization Owners)
+role_allow(_role: RepositoryRole{name: "ADMIN"}, action, _repo: Repository) if
+    action in ["LIST_ROLES", "DELETE"];
+role_allow(_role: OrganizationRole{name: "OWNER"}, action, _repo: Repository) if
+    action in ["LIST_ROLES", "DELETE"];
 
 
 # RepositoryRole Permissions

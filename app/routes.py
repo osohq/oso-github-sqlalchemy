@@ -114,12 +114,10 @@ def repos_show(org_id, repo_id):
     # Authorize repo access
     current_app.oso.authorize(repo, action="READ")
 
-    ## EXPERIMENTAL START
     # Get allowed actions on the repo
     actions = current_app.oso._oso.get_allowed_actions(
         get_current_user(), repo, allow_wildcard=True
     )
-    ## EXPERIMENTAL END
     return render_template(
         "repos/show.html",
         repo=repo,
@@ -129,7 +127,6 @@ def repos_show(org_id, repo_id):
         last_updated=last_updated,
         actions=actions,
     )
-    return {"repo": repo.repr(), "actions": actions}
 
 
 @bp.route("/orgs/<int:org_id>/repos/<int:repo_id>/issues", methods=["GET"])
