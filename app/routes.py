@@ -4,12 +4,13 @@ from flask_oso import authorize
 from .models import User, Organization, Team, Repository, Issue
 from .models import RepositoryRole, OrganizationRole, TeamRole
 from .forms import LoginForm
-from . import db
+from .auth import db, get_authorized_filter, get_current_user
 
 from sqlalchemy_oso import roles as oso_roles
+from sqlalchemy_oso.auth import authorize_model
 from oso import Variable
 
-from flask_login import login_required, login_user, current_user
+from flask_login import login_required, login_user
 
 
 bp = Blueprint("routes", __name__)
@@ -42,12 +43,12 @@ def login():
 @bp.route("/orgs", methods=["GET"])
 def orgs_index():
     # get all allowed organizations
-    g.current_action = Variable("action")
-    orgs = db.session.query(Organization).all()
+    filter = get_authorized_filter(Organization, action=Variable("action"))
+    orgs = Organization.query.filter(filter)
     # get allowed actions
     actions = {
         org.name: current_app.oso._oso.get_allowed_actions(
-            current_user, org, allow_wildcard=True
+            get_current_user(), org, allow_wildcard=True
         )
         for org in orgs
     }
@@ -60,7 +61,7 @@ def orgs_index():
 @bp.route("/orgs/<int:org_id>/repos", methods=["GET"])
 def repos_index(org_id):
     org = db.session.query(Organization).filter(Organization.id == org_id).first()
-    current_app.oso.authorize(org, actor=current_user, action="LIST_REPOS")
+    current_app.oso.authorize(org, actor=get_current_user(), action="LIST_REPOS")
 
     # get all allowed repositories
     g.current_action = Variable("action")
@@ -68,7 +69,7 @@ def repos_index(org_id):
     # get allowed actions
     actions = {
         repo.name: current_app.oso._oso.get_allowed_actions(
-            current_user, repo, allow_wildcard=True
+            get_current_user(), repo, allow_wildcard=True
         )
         for repo in repos
     }

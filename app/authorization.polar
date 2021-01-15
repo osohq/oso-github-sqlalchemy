@@ -2,6 +2,8 @@
 # ALLOW RULES
 # ===========
 
+# allow(_, _, _);
+
 # Users can see other users in their organization
 allow(user: User, _action, resource: User) if
     org in user.organizations and org in resource.organizations;
