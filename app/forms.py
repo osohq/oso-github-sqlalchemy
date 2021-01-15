@@ -12,5 +12,6 @@ class LoginForm(FlaskForm):
 
 
 class RepositoryRoleForm(FlaskForm):
-    name = StringField(render_kw={"readonly": True})
+    email = StringField(render_kw={"readonly": True})
+    team_name = StringField(render_kw={"readonly": True})
     role = SelectField(choices=RepositoryRole.choices)

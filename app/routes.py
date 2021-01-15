@@ -159,14 +159,14 @@ def repo_roles_index(org_id, repo_id):
             form = RepositoryRoleForm()
             form.role.data = role.name
             if role.user:
-                form.name.data = role.user.email
+                form.email.data = role.user.email
                 user_forms.append(form)
             elif role.team:
-                form.name.data = role.team.name
+                form.team_name.data = role.team.name
                 team_forms.append(form)
 
-        user_forms.sort(key=lambda x: x.name.data)
-        team_forms.sort(key=lambda x: x.name.data)
+        user_forms.sort(key=lambda x: x.email.data)
+        team_forms.sort(key=lambda x: x.team_name.data)
 
         return render_template(
             "repos/roles.html",
@@ -177,11 +177,21 @@ def repo_roles_index(org_id, repo_id):
         )
     if request.method == "POST":
         role_name = request.values.get("role")
-        email = request.values.get("name")
-        user = User.query.get(email)
+        email = request.values.get("email")
+        team_name = request.values.get("team_name")
         repo = Repository.query.get(repo_id)
-        if user:
-            oso_roles.reassign_user_role(db.session, user, repo, role_name, commit=True)
+        if email:
+            user = User.query.get(email)
+            if user:
+                oso_roles.reassign_user_role(
+                    db.session, user, repo, role_name, commit=True
+                )
+        elif team_name:
+            team = Team.query.filter_by(name=team_name).first()
+            RepositoryRole.query.filter_by(team=team, repository=repo).update(
+                {"name": role_name}
+            )
+            db.session.commit()
         return redirect(f"/orgs/{org_id}/repos/{repo_id}/roles")
 
 

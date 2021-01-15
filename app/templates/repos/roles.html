@@ -16,7 +16,7 @@
       action={{ url_for('routes.repo_roles_index', org_id=org.id, repo_id=repo.id) }}
       method="POST"
     >
-      {{ user_form.csrf_token }} {{ user_form.name }} {{ user_form.role }}
+      {{ user_form.csrf_token }} {{ user_form.email }} {{ user_form.role }}
       <input type="submit" value="Submit" />
     </form>
     {% endfor %}
@@ -29,7 +29,7 @@
       action={{ url_for('routes.repo_roles_index', org_id=org.id, repo_id=repo.id) }}
       method="POST"
     >
-      {{ team_form.csrf_token }} {{ team_form.name }} {{ team_form.role }}
+      {{ team_form.csrf_token }} {{ team_form.team_name }} {{ team_form.role }}
       <input type="submit" value="Submit" />
     </form>
     {% endfor %}
