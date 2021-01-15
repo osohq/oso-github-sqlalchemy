@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 from .fixtures import load_fixture_data
 from .db import db
+from .auth import get_current_user
 from .models import login_manager
 
 from werkzeug.exceptions import Unauthorized
@@ -59,6 +60,7 @@ def init_oso(app):
     set_get_session(base_oso, lambda: db.session)
     enable_roles(base_oso)
     base_oso.load_file("app/authorization.polar")
+    oso.set_get_actor(get_current_user)
     app.oso = oso
 
     return base_oso

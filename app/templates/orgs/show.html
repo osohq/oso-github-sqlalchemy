@@ -1,11 +1,11 @@
-{% extends "base.html" %} {% load i18n %} {% block content %}
+{% extends "base.html" %} {% block content %}
 
-<h2>{{ org_name }} Organization</h2>
+<h2>{{ org.name }} Organization</h2>
 <br />
-<a href="{% url 'repos_index' org_name %}"> Repositories </a>
-<a href="{% url 'teams_index' org_name %}"> Teams </a>
+<a href={{ url_for('routes.repos_index', org_id=org.id) }}> Repositories </a>
+<a href={{ url_for('routes.teams_index', org_id=org.id) }}> Teams </a>
 {% if can_view_people %}
-<a href="{% url 'org_people_index' org_name %}"> People </a>
+<a href={{ url_for('routes.org_people_index', org_id=org.id)}}> People </a>
 {% endif %}
 <br />
 <br />

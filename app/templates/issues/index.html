@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% load i18n %}
-{% block title %}{% trans "Issues" %}{% endblock %}
+<title>Issues</title>
 {% block content %}
 
 <h1>
-  <a href="{% url 'repos_index' org_name %}">{{ org_name }}</a> /
-  <a href="{% url 'repos_show' org_name repo_name %}">{{ repo_name }}</a>
+  <a href={{ url_for('routes.repos_index', org_id=org.id) }}>{{ org.name }}</a> /
+  <a href={{ url_for('routes.repos_show', org_id=org.id, repo_id=repo.id) }}>{{ repo.name }}</a>
 </h1>
 
 <h2>Issues</h2>
@@ -14,7 +13,10 @@
 <div class="col-md-6">
   <ul class="list-group">
     {% for issue in issue_list %}
-    <a href="/issues/{{ issue.name }}/" class="list-group-item list-group-item-action">
+    <a
+      href="/issues/{{ issue.id }}/"
+      class="list-group-item list-group-item-action"
+    >
       <b> {{ issue.name }} </b>
     </a>
     {% endfor %}

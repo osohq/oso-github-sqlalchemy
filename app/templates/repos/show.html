@@ -1,9 +1,8 @@
 {% extends "base.html" %}
-{% load i18n %}
-{% block title %}{% trans "View Repository" %}{% endblock %}
+<title>View Repository</title>
 {% block content %}
 <h1>
-  <a href="{% url 'repos_index' org_name %}">{{ repo.organization }}</a>
+  <a href={{ url_for('routes.repos_index', org_id=org_id) }}>{{ repo.organization.name }}</a>
   / {{ repo.name }}
 </h1>
 
@@ -16,10 +15,11 @@
 <br />
 
 <div>
-  <a href="{% url 'issues_index' org_name repo.name %}">
+  <a href={{ url_for('routes.issues_index', org_id=org_id, repo_id=repo.id) }}>
     <h4 class="text-primary">
       <b>
-        <pre>View Issues</pre></b>
+        <pre>View Issues</pre>
+      </b>
     </h4>
   </a>
 </div>
@@ -27,16 +27,16 @@
 <br />
 
 <div>
-  <a href="{% url 'repo_roles_index' org_name repo.name %}">
+  <a href={{ url_for('routes.repo_roles_index', org_id=org_id, repo_id=repo.id) }}>
     <h4 class="text-primary">
       <b>
-        <pre>Manage Access</pre></b>
+        <pre>Manage Access</pre>
+      </b>
     </h4>
   </a>
 </div>
 <br />
-<form action="{% url 'repos_show' org_name repo.name %}" method="post">
-  {% csrf_token %}
+<form action={{ url_for('routes.repos_show', org_id=org_id, repo_id=repo.id) }} method="POST">
   <button class="btn btn-primary" type="submit" name="delete_repo" value="">
     Delete Repository
   </button>

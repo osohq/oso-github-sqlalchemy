@@ -1,10 +1,10 @@
-{% extends "base.html" %} {% load i18n %}
-{% block title %}{% trans "Roles" %} {% endblock %}
+{% extends "base.html" %}
+<title>Roles</title>
 {% block content %}
 
 <h1>
-  <a href="{% url 'repos_index' org_name %}">{{ org_name }}</a> /
-  <a href="{% url 'repos_show' org_name repo_name %}">{{ repo_name }}</a>
+  <a href={{ url_for('routes.repos_index', org_id=org.id) }}>{{ org.name }}</a> /
+  <a href={{ url_for('routes.repos_show', org_id=org.id, repo_id=repo.id) }}>{{ repo.name }}</a>
 </h1>
 
 <div class="col-md-6">
@@ -12,9 +12,11 @@
 
   <ul class="list-group">
     {% for user_form in user_forms %}
-    <form action="{% url 'repo_roles_index' org_name repo_name %}" method="post">
-      {% csrf_token %} {{ user_form.1 }}
-      <input type="hidden" name="username" value="{{ user_form.0 }}" />
+    <form
+      action={{ url_for('routes.repo_roles_index', org_id=org.id, repo_id=repo.id) }}
+      method="POST"
+    >
+      {{ user_form.csrf_token }} {{ user_form.name }} {{ user_form.role }}
       <input type="submit" value="Submit" />
     </form>
     {% endfor %}
@@ -23,9 +25,11 @@
   <h2>Teams</h2>
   <ul class="list-group">
     {% for team_form in team_forms %}
-    <form action="{% url 'repo_roles_index' org_name repo_name %}" method="post">
-      {% csrf_token %} {{ team_form.1 }}
-      <input type="hidden" name="teamname" value="{{ team_form.0 }}" />
+    <form
+      action={{ url_for('routes.repo_roles_index', org_id=org.id, repo_id=repo.id) }}
+      method="POST"
+    >
+      {{ team_form.csrf_token }} {{ team_form.name }} {{ team_form.role }}
       <input type="submit" value="Submit" />
     </form>
     {% endfor %}
