@@ -127,6 +127,7 @@ def repos_show(org_id, repo_id):
         commits=commits,
         contributors=contributors,
         last_updated=last_updated,
+        actions=actions,
     )
     return {"repo": repo.repr(), "actions": actions}
 

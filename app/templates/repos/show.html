@@ -26,6 +26,7 @@
 
 <br />
 
+{% if  "LIST_ROLES" in actions %}
 <div>
   <a href={{ url_for('routes.repo_roles_index', org_id=org_id, repo_id=repo.id) }}>
     <h4 class="text-primary">
@@ -35,6 +36,7 @@
     </h4>
   </a>
 </div>
+{% endif %}
 <br />
 <form action={{ url_for('routes.repos_show', org_id=org_id, repo_id=repo.id) }} method="POST">
   <button class="btn btn-primary" type="submit" name="delete_repo" value="">
