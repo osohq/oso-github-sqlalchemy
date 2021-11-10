@@ -1,3 +1,5 @@
+# ⚠️ Project Archived: Please check out [osohq/gitclub](https://github.com/osohq/gitclub) for an up-to-date example
+
 # Modeling GitHub permissions with oso
 
 This application is a sample application based on GitHub, meant to model the basics of GitHub's permissions system.
